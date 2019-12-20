@@ -1,0 +1,36 @@
+pragma solidity >=0.4.22 <0.6.0;
+
+contract Access {
+
+    struct records {
+        uint8 data;
+        uint8 call;
+    }
+
+    address iotdevice;
+    mapping(address => records) devices;
+
+    function registerData(address device, uint8 data) public {
+            devices[device].data = data;
+        }
+
+    function registerCalls(address device, uint8 call) public {
+            devices[device].call = call;
+        }
+
+    function getDataDetails(address device) public view returns (uint8){
+            return devices[device].data;
+        }
+
+    function getCallDetails(address device) public view returns (uint8){
+            return devices[device].call;
+        }
+
+    function changeCallDetails(address device, uint8 newCall) public {
+            devices[device].call = newCall;
+        }
+
+    function changeDataDetails(address device, uint8 newData) public {
+            devices[device].data = newData;
+        }
+}
