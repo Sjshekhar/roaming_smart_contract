@@ -1,36 +1,70 @@
 pragma solidity >=0.4.22 <0.6.0;
 
-contract Access {
+contract CallDataRecord {
 
-    struct records {
-        uint8 data;
-        uint8 call;
+    struct record {
+        uint16 callID;     //unique id of the call
+        uint16 caller;     //calling number
+        uint16 receiver;   //called number
+        uint16 duration;   //duration of the call in sec
+        uint16 start;      //start time of the call
+        uint16 end;        //end time of the call
     }
 
-    address iotdevice;
-    mapping(address => records) devices;
+    address roamingOperator;
+    mapping(address => mapping (uint16 => mapping (uint16 => record))) records;
 
-    function registerData(address device, uint8 data) public {
-            devices[device].data = data;
-        }
+    constructor() public {
+        roamingOperator = msg.sender;
+    }
 
-    function registerCalls(address device, uint8 call) public {
-            devices[device].call = call;
-        }
+    function registerCall(uint16 callerID, uint16 callID, uint16 caller, uint16 receiver, uint16 start, uint16 end, uint16 duration) public payable verifySenderAndBalance {
 
-    function getDataDetails(address device) public view returns (uint8){
-            return devices[device].data;
-        }
+            records[roamingOperator][callerID][callID].start = start;
+            records[roamingOperator][callerID][callID].end = end;
+            records[roamingOperator][callerID][callID].caller = caller;
+            records[roamingOperator][callerID][callID].receiver = receiver;
+            records[roamingOperator][callerID][callID].duration = duration;
+            records[roamingOperator][callerID][callID].callID = callID;
+    }
 
-    function getCallDetails(address device) public view returns (uint8){
-            return devices[device].call;
-        }
+    function getCallDetails(uint16 callerID, uint16 callID) public view returns (uint16, uint16, uint16, uint16, uint16) {
+            return (
+            records[roamingOperator][callerID][callID].start,
+            records[roamingOperator][callerID][callID].end,
+            records[roamingOperator][callerID][callID].caller,
+            records[roamingOperator][callerID][callID].receiver,
+            records[roamingOperator][callerID][callID].duration
+            );
+    }
 
-    function changeCallDetails(address device, uint8 newCall) public {
-            devices[device].call = newCall;
-        }
+    function changeStartTime(uint16 callerID, uint16 callID, uint16 start) public payable verifySenderAndBalance {
+             records[roamingOperator][callerID][callID].start = start;
+    }
 
-    function changeDataDetails(address device, uint8 newData) public {
-            devices[device].data = newData;
-        }
+    function changeEndTime(uint16 callerID, uint16 callID, uint16 end) public payable verifySenderAndBalance {
+             records[roamingOperator][callerID][callID].end = end;
+    }
+
+    function changeCaller(uint16 callerID, uint16 callID, uint16 caller) public payable verifySenderAndBalance {
+             records[roamingOperator][callerID][callID].caller = caller;
+    }
+
+    function changeReceiver(uint16 callerID, uint16 callID, uint16 receiver) public payable verifySenderAndBalance {
+             records[roamingOperator][callerID][callID].receiver = receiver;
+    }
+
+    function checkIfRecordExists(uint16 callerID, uint16 callID) public view returns (bool) {
+             return records[roamingOperator][callerID][callID].callID != 0;
+    }
+
+    function deleteRecord(uint16 callerID, uint16 callID) public payable verifySenderAndBalance {
+              delete records[roamingOperator][callerID][callID].callID;
+    }
+
+    modifier verifySenderAndBalance() {
+        require(msg.sender == roamingOperator);
+        require(msg.value < msg.sender.balance);
+        _;
+    }
 }
